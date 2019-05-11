@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GA Graph</title>
+    <!-- 引入 ECharts 文件 -->
+    <!-- <script type='text/javascript' src="./echarts.js"></script> -->
+    <script src="https://cdn.bootcss.com/echarts/4.2.1-rc1/echarts.min.js"></script>
+    <!-- <script type='text/javascript' src="./jquery-3.4.0.js"></script> -->
+    <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+</head>
+<body>
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<div id="main" style="width: 1200px;height:600px;"></div>
+
+<script type="text/javascript">
+
+    // 获取ga迭代数据
+    let dx, dy;
+    $.getJSON("./data_x.json", function (x) {
+        console.log("x_successful");
+        dx = x;
+        get_y()
+    });
+
+    function get_y() {
+        $.getJSON("./data_y.json", function (y) {
+            console.log("y_successful");
+            dy = y;
+            main()
+        })
+    }
+
+    function main() {
+
+        // 函数数据
+        let func_x = [];
+        for (var i = 0; i < 1001; i++) {
+            func_x[i] = -5 + i / 100;
+        }
+        let func_y = [];
+        for (i in func_x) {
+            func_y.push(func_x[i] + (10 * Math.sin(5 * func_x[i]) + (7 * Math.cos(4 * func_x[i]))));
+        }
+        func_data = func_x.map((key, value) => [key, func_y[value]]);
+        console.log(func_data);
+
+        //GA 迭代数据处理
+        dx = eval(dx);
+        dy = eval(dy);
+        for (i in dx) {
+            ga_data = dx.map((key, value) => [key, dy[value]])
+        }
+        for (i in ga_data) {
+            ga_data[i] = ga_data[i][0].map((key, value) => [key, ga_data[i][1][value]]);
+        }
+        console.log(ga_data);
+
+        // 基于准备好的dom，初始化echarts实例
+        var myChart = echarts.init(document.getElementById('main'));
+
+        var option = {
+            baseOption: {
+                timeline: {
+                    axisType: 'category',
+                    orient: 'vertical',
+                    autoPlay: true,
+                    inverse: true,
+                    playInterval: 1000,
+                    left: null,
+                    right: 0,
+                    top: 20,
+                    bottom: 20,
+                    width: 55,
+                    height: null,
+                    label: {
+                        normal: {
+                            textStyle: {
+                                color: '#999'
+                            }
+                        },
+                        emphasis: {
+                            textStyle: {
+                                color: '#fff'
+                            }
+                        }
+                    },
+                    symbol: 'none',
+                    lineStyle: {
+                        color: '#555'
+                    },
+                    checkpointStyle: {
+                        color: '#bbb',
+                        borderColor: '#777',
+                        borderWidth: 2
+                    },
+                    controlStyle: {
+                        // showNextBtn: false,
+                        // showPrevBtn: false,
+                        normal: {
+                            color: '#666',
+                            borderColor: '#666'
+                        },
+                        emphasis: {
+                            color: '#aaa',
+                            borderColor: '#aaa'
+                        }
+                    },
+                    data: [],
+                },
+                backgroundColor: '#404a59',
+                title: [{
+                    text: '第1次迭代',
+                    textAlign: 'center',
+                    left: '70%',
+                    top: '78%',
+                    textStyle: {
+                        fontSize: 30,
+                        color: 'rgba(255, 255, 255, 0.7)'
+                    }
+                }, {
+                    text: 'GA 遗传算法 f(x)=x+10sin5x+7cos4x',
+                    left: 'center',
+                    top: 20,
+                    textStyle: {
+                        color: '#fff',
+                        fontWeight: 'normal',
+                        fontSize: 20
+                    }
+                }],
+                tooltip: {
+                    trigger: 'none',
+                    axisPointer: {
+                        type: 'cross',
+                        label: {
+                            backgroundColor: '#6a7985'
+                        }
+                    },
+                },
+                grid: {
+                    top: 100,
+                    // containLabel: true,
+                    // left: 30,
+                    // right: '110'
+                },
+                visualMap: {
+                    show: false,
+                    min: -20,
+                    max: 20,
+                    dimension: 1,
+                    itemWidth: 5,
+                    itemHeight: 20,
+                    // orient: 'vertical',
+                    left: 20,
+                    seriesIndex: 1,
+                    top: 'center',
+                    // text: ['HIGH', 'LOW'],
+                    // calculable: true,
+                    inRange: {
+                        color: ['#f20019', '#e807f2', '#006df2', '#f2d300', '#00f205']
+                    }
+                },
+                calculable: true,
+                xAxis: [
+                    {
+                        'type': 'value',
+                        'axisLabel': {'interval': 0},
+                        name: '函数X',
+                        splitNumber: 10,
+                        nameGap: 25,
+                        nameLocation: 'middle',
+                        nameTextStyle: {
+                            fontSize: 12,
+                            padding: [0, -750, 0, 0],
+                        },
+                        splitLine: {show: false},
+                        axisLine: {
+                            lineStyle: {
+                                color: '#ccc'
+                            }
+                        },
+
+                    }
+                ],
+                yAxis: [
+                    {
+                        type: 'value',
+                        name: '函数Y',
+                        nameTextStyle: {
+                            color: '#ccc',
+                            fontSize: 12,
+                            padding: [0, 950, 0, 0],
+                        },
+                        axisLine: {
+                            lineStyle: {
+                                color: '#ccc'
+                            }
+                        },
+                        splitLine: {
+                            // show: false
+                        },
+                    }
+                ],
+                series: [{
+                    name: 'X：',
+                    type: 'line',
+                    smooth: true,
+                    symbol: 'none',
+                    color: '#ffe1bf'
+                }, {
+                    name: '个体',
+                    type: 'effectScatter',
+                    symbolSize: 15,
+                    itemStyle: {
+                        color: {
+                            type: 'radial',
+                            x: 0.5,
+                            y: 0.5,
+                            r: 0.5,
+                            colorStops: [{
+                                offset: 0, color: '#98FF6F' // 0% 处的颜色
+                            }, {
+                                offset: 1, color: '#98ddff' // 100% 处的颜色
+                            }],
+                            global: false // 缺省为 false
+                        }
+                    }
+                }]
+            },
+            options: []
+        };
+        for (i in ga_data) {
+            option.baseOption.timeline.data.push(i);
+            option.options.push({
+                title: {
+                    show: true,
+                    'text': "第" + i + "次迭代"
+                },
+                series: [
+                    {data: func_data},
+                    {data: ga_data[i]},
+                ]
+            })
+        }
+        // 使用刚指定的配置项和数据显示图表。
+        myChart.setOption(option);
+    }
+</script>
+
+
+</body>
+</html>
